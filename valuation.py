@@ -1,7 +1,7 @@
 import tensorflow as tf
 from fastapi import FastAPI
 from pydantic import BaseModel
-import uvicorn
+import math
 
 class Pendanaan(BaseModel):
     total_aset: float
@@ -15,7 +15,7 @@ loaded_model = tf.keras.models.load_model('model_valuation.h5')
 
 @app.get("/")
 def home():
-    return {"message": "OK"}
+    return {"message": "Hello, World!"}
 
 @app.post("/predict")
 def predict(data: Pendanaan):
@@ -27,7 +27,10 @@ def predict(data: Pendanaan):
 
 
     pendanaan = loaded_model.predict([[total_aset, penjualan_rata2, tenaga_kerja, aset_jaminan_kredit, jumlah_dokumen_kredit]])
-    return {"pendanaan": pendanaan.tolist()}
+
+    rounded_value = math.floor(pendanaan[0][0])*1000000
+                               
+    return {"pendanaan": rounded_value}
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)

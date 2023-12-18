@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
 import numpy as np
+import math
 import gunicorn
 
 # Define class model
@@ -102,11 +103,13 @@ def predict(data: Pendanaan):
     jumlah_dokumen_kredit = data.jumlah_dokumen_kredit
 
     valuation_result = valuation_model.predict([[total_aset, penjualan_rata2, tenaga_kerja, aset_jaminan_kredit, jumlah_dokumen_kredit]])
-
+    
+    rounded_value = math.floor(valuation_result[0][0])*1000000
+                               
     return {
-        "Valuation:": valuation_result.tolist()
+        "Valuation:": rounded_value
     }
 
 # run API with uvicorn
 if __name__ == '__main__':
-    uvicorn.run(app, host='127.0.0.1', port=8000)
+    uvicorn.run(app, host='127.0.0.1', port=8080)
