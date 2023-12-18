@@ -6,7 +6,8 @@ from pydantic import BaseModel
 import uvicorn
 import numpy as np
 import math
-import gunicorn
+from preprocessing import preprocess_data
+
 
 # Define class model
 
@@ -39,12 +40,17 @@ app = FastAPI()
 # Load model fitur 1, 2, 3 
 screening_model = tf.keras.models.load_model('model_screening.h5')
 valuation_model = tf.keras.models.load_model('model_valuation.h5')
-profilling_model = tf.keras.models.load_model('model_profiling.h5')
+
+def predict_profile(normalized_data):
+    #load tensorflow model
+    profilling_model = tf.keras.models.load_model('model_profiling.h5')
+    profilling_predictions = profilling_model.predict(normalized_data)
+    return profilling_predictions
 
 # Endpoint index
 @app.get("/")
 def index():
-    return {'message': 'OK'}
+    return {'message': 'Welcome to Bevest Machine Learning API'}
 
 # Endpoint screening ukm (skrining ukm) | fitur ml 1
 @app.post("/screening")
@@ -78,10 +84,12 @@ def predict(data: Investor):
     number_of_children = data.number_of_children
     home_ownership = data.home_ownership
 
-    prediction = profilling_model.predict([[age, gender, income, education, marital_status, number_of_children, home_ownership]])
+    normalized_data = preprocess_data(age, gender, income, education, marital_status, number_of_children, home_ownership)
+    profilling_predictions = predict_profile(normalized_data)
+
 
     # Mendapatkan indeks nilai maksimum
-    predicted_class = np.argmax(prediction)
+    predicted_class = np.argmax(profilling_predictions)
 
     # Definisikan label kelas sesuai dengan indeks maksimum
     class_labels = ['paragmatic', 'progresif', 'pioneering']
@@ -89,7 +97,7 @@ def predict(data: Investor):
 
 
     return {
-        "prediction": prediction.tolist(),
+        "prediction": profilling_predictions.tolist(),
         'label': predicted_label
     }
 

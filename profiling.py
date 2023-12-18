@@ -3,6 +3,7 @@ import tensorflow as tf
 from fastapi import FastAPI
 from pydantic import BaseModel
 import numpy as np
+from preprocessing import preprocess_data
 import uvicorn
 
 class profiling(BaseModel):
@@ -18,7 +19,12 @@ class profiling(BaseModel):
 app = FastAPI()
 
 # Load model Fitur 1
-loaded_model = tf.keras.models.load_model('profiling.h5')
+
+def predict_profile(normalized_data):
+    # Load the TensorFlow model
+    model = tf.keras.models.load_model('investor_profiling.h5')
+    predictions = model.predict(normalized_data)
+    return predictions
 
 
 @app.get("/")
@@ -37,18 +43,19 @@ def predict(data: profiling):
     number_of_children = data.number_of_children
     home_ownership = data.home_ownership
     
-    prediction = loaded_model.predict([[age, gender, income, education, marital_status, number_of_children, home_ownership]])
+    normalized_data = preprocess_data(age, gender, income, education, marital_status, number_of_children, home_ownership)
+    predictions = predict_profile(normalized_data)
 
     # Mendapatkan indeks nilai maksimum
-    predicted_class = np.argmax(prediction)
+    predicted_class = np.argmax(predictions)
 
     # Definisikan label kelas sesuai dengan indeks maksimum
-    class_labels = ['paragmatic', 'progresif', 'pioneering']
+    class_labels = ['Pragmatic', 'Progresif', 'Pioneering']
     predicted_label = class_labels[predicted_class]
 
 
     return {
-        "prediction": prediction.tolist(),
+        "prediction": predictions.tolist(),
         'label': predicted_label
     }
     
