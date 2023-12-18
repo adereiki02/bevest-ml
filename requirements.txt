@@ -4,5 +4,4 @@ fastapi
 tensorflow
 scikit-learn
 joblib
-math
 numpy
