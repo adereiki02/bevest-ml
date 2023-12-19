@@ -1,19 +1,14 @@
-FROM python:3.9.6-slim-buster AS dependencies
+FROM python:3.9-slim@sha256:980b778550c0d938574f1b556362b27601ea5c620130a572feb63ac1df03eda5 
 
-RUN apt-get update && apt-get -y upgrade
+ENV PYTHONUNBUFFERED True
 
-RUN pip install pipenv
-ENV PIPENV_VENV_IN_PROJECT=1
-ENV PORT 8080
+ENV APP_HOME /app
+WORKDIR $APP_HOME
+COPY . ./
 
-RUN useradd --create-home user && chown -R user /home/user
-USER user
-WORKDIR /home/user/src
+ENV PORT 2345
 
-COPY --chown=user Pipfile* .
-RUN pipenv sync --keep-outdated
-ENV PATH="/home/user/src/.venv/bin:$PATH"
-ENV PYTHONPATH=.
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY --chown=user  . .
-CMD ["python", "-m", "fastapidemo"]
+# As an example here we're running the web service with one worker on uvicorn.
+CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers 4
