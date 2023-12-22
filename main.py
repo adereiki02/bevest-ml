@@ -1,7 +1,8 @@
 #Import Library
 # from numpy import double
 import tensorflow as tf
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
 import numpy as np
@@ -10,6 +11,7 @@ import math
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import joblib
+
 
 # Define class model
 
@@ -71,25 +73,28 @@ def index():
 
 # Endpoint screening ukm (skrining ukm) | fitur ml 1
 @app.post("/screening")
-def predict(data: UKM):
-    total_aset = data.total_aset
-    penjualan_rata2 = data.penjualan_rata2
-    tenaga_kerja = data.tenaga_kerja
-    aset_jaminan_kredit = data.aset_jaminan_kredit
-    jumlah_dokumen_kredit = data.jumlah_dokumen_kredit
+def predict(data: UKM):   
+        total_aset = data.total_aset
+        penjualan_rata2 = data.penjualan_rata2
+        tenaga_kerja = data.tenaga_kerja
+        aset_jaminan_kredit = data.aset_jaminan_kredit
+        jumlah_dokumen_kredit = data.jumlah_dokumen_kredit
+        
+        screening_result = screening_model.predict([[total_aset, penjualan_rata2, tenaga_kerja, aset_jaminan_kredit, jumlah_dokumen_kredit]])
 
-    screening_result = screening_model.predict([[total_aset, penjualan_rata2, tenaga_kerja, aset_jaminan_kredit, jumlah_dokumen_kredit]])
-
-    if (screening_result > 0.5 ):
-        label = "Layak"
-    else:
-        label = "Tidak Layak"
-
-    return {
-        "Screening Result:": screening_result.tolist(),
-        "Label:": label
-    }
-
+        if screening_result > 0.5:
+            label = "layak"
+        else:
+            label = "tidak_layak"
+        
+        return {
+            "msg": "success",
+            "code": 200,
+            "screening_result": screening_result.tolist(),
+            "label": label,
+        }
+    
+        
 # Endpoint profilling investor (investor profilling) | fitur ml 2
 @app.post("/profilling")
 def predict(data: Investor):
@@ -114,6 +119,8 @@ def predict(data: Investor):
 
 
     return {
+        "msg": "success",
+        "code": 200,
         "prediction": profilling_predictions.tolist(),
         'label': predicted_label
     }
@@ -130,11 +137,13 @@ def predict(data: Pendanaan):
     valuation_result = valuation_model.predict([[total_aset, penjualan_rata2, tenaga_kerja, aset_jaminan_kredit, jumlah_dokumen_kredit]])
     
     rounded_value = math.floor(valuation_result[0][0])*1000000
-                               
-    return {
-        "Valuation:": rounded_value
-    }
 
+    return {
+        "msg": "success",
+        "code": 200,
+        "valuation:": rounded_value,
+    }
+ 
 # run API with uvicorn
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8080)
