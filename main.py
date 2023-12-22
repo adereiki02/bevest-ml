@@ -141,7 +141,7 @@ def predict(data: Pendanaan):
     return {
         "msg": "success",
         "code": 200,
-        "valuation:": rounded_value,
+        "valuation": rounded_value,
     }
  
 # run API with uvicorn
